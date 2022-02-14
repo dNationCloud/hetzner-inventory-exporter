@@ -62,7 +62,6 @@ type Exporter struct {
 	logger  log.Logger
 	config  *Config
 	metrics ExporterMetrics
-	//client  client.OwmClient
 }
 
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
@@ -89,19 +88,18 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 
 		client := hcloud.NewClient(hcloud.WithToken(target.ApiKey))
 
-		servers, _, err := client.Server.List(context.Background(), hcloud.ServerListOpts{})
+		servers, _, err := client.Server.List(ctx, hcloud.ServerListOpts{})
 		if err != nil {
 			level.Error(e.logger).Log("msg", "Error while fetching list of servers",
 				"name", target.Name, "err", err)
 			e.metrics.ScrapeErrors.WithLabelValues("collect.serverlist." + target.Name).Inc()
 			e.metrics.Error.Set(1)
 		} else {
-
 			ch <- prometheus.MustNewConstMetric(serverCountDesc,
 				prometheus.GaugeValue, float64(len(servers)), target.Name)
 		}
 
-		images, _, err := client.Image.List(context.Background(), hcloud.ImageListOpts{
+		images, _, err := client.Image.List(ctx, hcloud.ImageListOpts{
 			Type: []hcloud.ImageType{hcloud.ImageTypeSnapshot, hcloud.ImageTypeBackup},
 		})
 		if err != nil {
@@ -118,10 +116,9 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 			}
 			ch <- prometheus.MustNewConstMetric(imageSizeDesc,
 				prometheus.GaugeValue, float64(size), target.Name)
-
 		}
 
-		volumes, _, err := client.Volume.List(context.Background(), hcloud.VolumeListOpts{})
+		volumes, _, err := client.Volume.List(ctx, hcloud.VolumeListOpts{})
 		if err != nil {
 			level.Error(e.logger).Log("msg", "Error while fetching list of volumes",
 				"name", target.Name, "err", err)
@@ -136,10 +133,9 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 			}
 			ch <- prometheus.MustNewConstMetric(volumeSizeDesc,
 				prometheus.GaugeValue, float64(size), target.Name)
-
 		}
 
-		lbs, _, err := client.LoadBalancer.List(context.Background(), hcloud.LoadBalancerListOpts{})
+		lbs, _, err := client.LoadBalancer.List(ctx, hcloud.LoadBalancerListOpts{})
 		if err != nil {
 			level.Error(e.logger).Log("msg", "Error while fetching list of load balancers",
 				"name", target.Name, "err", err)
@@ -150,7 +146,7 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 				prometheus.GaugeValue, float64(len(lbs)), target.Name)
 		}
 
-		nets, _, err := client.Network.List(context.Background(), hcloud.NetworkListOpts{})
+		nets, _, err := client.Network.List(ctx, hcloud.NetworkListOpts{})
 		if err != nil {
 			level.Error(e.logger).Log("msg", "Error while fetching list of networks",
 				"name", target.Name, "err", err)
@@ -160,7 +156,6 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 			ch <- prometheus.MustNewConstMetric(netCountDesc,
 				prometheus.GaugeValue, float64(len(nets)), target.Name)
 		}
-
 	}
 }
 
