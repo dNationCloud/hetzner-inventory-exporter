@@ -11,6 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+VERSION := 1.0.0
 
-build:
-	docker build . -t hetzner-inventory-exporter:1.0.0
+build-docker:
+	docker build . -t hetzner-inventory-exporter:$(VERSION)
+
+build-local:
+	go fmt
+	go mod download
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o hetzner-inventory-exporter .
+	strip hetzner-inventory-exporter

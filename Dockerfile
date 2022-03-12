@@ -1,4 +1,4 @@
-FROM golang:1.16 as builder
+FROM golang:1.17 as builder
 
 WORKDIR /workspace
 COPY go.mod go.mod
@@ -9,7 +9,7 @@ COPY main.go main.go
 COPY types.go types.go
 COPY exporter.go exporter.go
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o hetzner-inventory-exporter .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o hetzner-inventory-exporter . ; strip hetzner-inventory-exporter
 
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
