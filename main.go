@@ -127,7 +127,9 @@ func main() {
 	handlerFunc := newHandler(config, logger, newExporterMetrics())
 	http.Handle(*metricPath, promhttp.InstrumentMetricHandler(prometheus.DefaultRegisterer, handlerFunc))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write(landingPage)
+		if _, err = w.Write(landingPage); err != nil {
+			level.Error(logger).Log("msg", "failed to write landing page", "err", err)
+		}
 	})
 
 	level.Info(logger).Log("msg", "Listening on address", "address", *listenAddress)
