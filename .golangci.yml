@@ -1,3 +1,4 @@
 linters-settings:
   errcheck:
-    exclude: .golangci_excludes.txt
+    exclude-functions:
+      - (github.com/go-kit/log.Logger).Log

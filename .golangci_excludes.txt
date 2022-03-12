@@ -1,2 +1,0 @@
-// do not report logger gokit
-(github.com/go-kit/kit/log.Logger).Log
