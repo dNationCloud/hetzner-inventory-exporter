@@ -18,6 +18,7 @@ build-docker:
 
 build-local:
 	go fmt
+	go mod tidy
 	go mod download
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o hetzner-inventory-exporter .
 	strip hetzner-inventory-exporter
