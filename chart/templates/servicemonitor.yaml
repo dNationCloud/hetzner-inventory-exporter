@@ -1,0 +1,15 @@
+{{- if .Values.serviceMonitor.enabled -}}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "exporter.fullname" . }}
+  labels:
+    {{- include "exporter.labels" . | nindent 6 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "exporter.selectorLabels" . | nindent 6 }}
+  endpoints:
+{{ tpl .Values.serviceMonitor.scrape_config . | indent 4 }}
+{{- end }}

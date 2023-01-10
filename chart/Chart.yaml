@@ -1,0 +1,12 @@
+---
+apiVersion: v2
+name: hetzner-inventory-exporter
+description: A Hetzner prometheus exporter chart
+sources:
+  - https://github.com/dNationCloud/hetzner-inventory-exporter
+version: 1.0.0
+appVersion: 1.0.0
+type: application
+maintainers:
+  - name: Richard Kosegi
+    email: richard.kosegi@gmail.com

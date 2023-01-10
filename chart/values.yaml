@@ -1,0 +1,51 @@
+---
+replicaCount: 1 # Count of replicas
+
+image:
+  repository: dnationcloud/hetzner-inventory-exporter # Container repository
+  pullPolicy: IfNotPresent # Container image pull policy
+  tag: "" # Overrides the image tag whose default is the chart appVersion.
+imagePullSecrets: [] # Image pull secrets
+nameOverride: "" # Overrides the chart's name
+fullnameOverride: "" # Overrides the chart's computed fullname
+
+serviceAccount:
+  create: true # Specifies whether a service account should be created
+  annotations: {} # Annotations to add to the service account
+  name: "" # The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+
+podAnnotations: {} # annotations for all pods
+podSecurityContext: {} # The SecurityContext for pods
+securityContext:
+  capabilities:
+    drop: # Capabilities to drop
+      - ALL
+  readOnlyRootFilesystem: true # Whether root filesystem should be mounted as read only
+  runAsNonRoot: true # Whether run container as non-root user
+
+service:
+  type: ClusterIP # Service type
+  port: 80 # Service port
+
+resources:
+  limits:
+    cpu: 100m # CPU limits
+    memory: 128Mi # Memory limits
+  requests:
+    cpu: 50m # CPU requests
+    memory: 64Mi # Memory requests
+nodeSelector: {} # Node selector for pods
+tolerations: [] # Tolerations for pods
+affinity: {} # Affinity for pods
+targets: [] # List of Hetzner projects to export metrics for
+#  - name: project-1
+#    apiKey: abcdefghijklmnopqrstuvwxyz0987654321
+
+serviceMonitor:
+  enabled: true  # Whether servicemonitor resource should be installed
+  # scrape configuration
+  scrape_config: |
+    - port: metrics
+      interval: 5m
+
+

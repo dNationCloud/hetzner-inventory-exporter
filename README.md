@@ -50,17 +50,17 @@ docker run -p 9112:9112 -v $(pwd)/config.yaml:/config.yaml -ti hetzner-inventory
 
 ## Exported metrics
 
-| Metric name             |     Type | Description |
-|-------------------------|----------|-------------|
-| hetzner_exporter_last_scrape_error | Gauge | Number of errors in last scrape round |
-| hetzner_exporter_scrapes_total | Counter | Total number of scrapes |
-| hetzner_inventory_image_count | Gauge | Number of images (snapshots,backups) in project |
-| hetzner_inventory_image_size | Gauge | Cumulative size of all images in project |
-| hetzner_inventory_load_balancers | Gauge | Number of load balancers in project |
-| hetzner_inventory_network_count | Gauge | Number of networks in project |
-| hetzner_inventory_server_count | Gauge | Number of servers in project |
-| hetzner_inventory_volume_count | Gauge | Number of volumes in project |
-| hetzner_inventory_volume_size | Gauge | Cumulative size of all volumes in project |
+| Metric name                        | Type    | Description                                     |
+|------------------------------------|---------|-------------------------------------------------|
+| hetzner_exporter_last_scrape_error | Gauge   | Number of errors in last scrape round           |
+| hetzner_exporter_scrapes_total     | Counter | Total number of scrapes                         |
+| hetzner_inventory_image_count      | Gauge   | Number of images (snapshots,backups) in project |
+| hetzner_inventory_image_size       | Gauge   | Cumulative size of all images in project        |
+| hetzner_inventory_load_balancers   | Gauge   | Number of load balancers in project             |
+| hetzner_inventory_network_count    | Gauge   | Number of networks in project                   |
+| hetzner_inventory_server_count     | Gauge   | Number of servers in project                    |
+| hetzner_inventory_volume_count     | Gauge   | Number of volumes in project                    |
+| hetzner_inventory_volume_size      | Gauge   | Cumulative size of all volumes in project       |
 
 ## Example exporter output
 
@@ -92,3 +92,19 @@ hetzner_inventory_volume_size{project="my-project-1"} 0
 hetzner_inventory_volume_size{project="my-project-2"} 120
 hetzner_inventory_volume_size{project="my-project-3"} 120
 ```
+
+## Install using helm
+
+Prepare file `config.yaml` where you put your project name and Hetzner API key:
+
+```yaml
+targets:
+  - name: project-1
+    apiKey: abcdefghijklmnopqrstuvwxyz0987654321
+```
+
+```shell
+helm upgrade --install my-release ./chart --values conig.yaml
+```
+
+For detailed list of all supported chart values, check [generated documentation](chart)
