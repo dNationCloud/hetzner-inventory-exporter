@@ -11,12 +11,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package internal
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"context"
+	"github.com/hetznercloud/hcloud-go/hcloud"
+	"github.com/prometheus/client_golang/prometheus"
+)
 
-type ExporterMetrics struct {
-	TotalScrapes prometheus.Counter
+type exporterMetrics struct {
+	ScrapesSum   *prometheus.SummaryVec
 	ScrapeErrors *prometheus.CounterVec
 	Error        prometheus.Gauge
 }
@@ -28,4 +32,9 @@ type Target struct {
 
 type Config struct {
 	Targets []Target `yaml:"targets"`
+}
+
+type scraper interface {
+	Scrape(ctx context.Context, c *hcloud.Client, name string, ch chan<- prometheus.Metric) error
+	Name() string
 }

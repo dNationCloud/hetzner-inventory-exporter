@@ -53,7 +53,7 @@ docker run -p 9112:9112 -v $(pwd)/config.yaml:/config.yaml -ti hetzner-inventory
 | Metric name                        | Type    | Description                                     |
 |------------------------------------|---------|-------------------------------------------------|
 | hetzner_exporter_last_scrape_error | Gauge   | Number of errors in last scrape round           |
-| hetzner_exporter_scrapes_total     | Counter | Total number of scrapes                         |
+| hetzner_exporter_scrapes           | Summary | Summary of scrapes                              |
 | hetzner_inventory_image_count      | Gauge   | Number of images (snapshots,backups) in project |
 | hetzner_inventory_image_size       | Gauge   | Cumulative size of all images in project        |
 | hetzner_inventory_load_balancers   | Gauge   | Number of load balancers in project             |

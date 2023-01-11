@@ -15,6 +15,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/rkosegi/hetzner-inventory-exporter/internal"
 	"net/http"
 	"os"
 
@@ -55,11 +56,11 @@ func init() {
 	prometheus.MustRegister(version.NewCollector(PROG_NAME))
 }
 
-func newHandler(config *Config, logger log.Logger, exporterMetrics ExporterMetrics) http.HandlerFunc {
+func newHandler(config *internal.Config, logger log.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		registry := prometheus.NewRegistry()
-		registry.MustRegister(newExporter(ctx, config, logger, exporterMetrics))
+		registry.MustRegister(internal.New(ctx, config, logger))
 
 		gatherers := prometheus.Gatherers{
 			prometheus.DefaultGatherer,
@@ -70,14 +71,16 @@ func newHandler(config *Config, logger log.Logger, exporterMetrics ExporterMetri
 	}
 }
 
-func loadConfig(configFile string) (*Config, error) {
-	var cfg = &Config{}
+func loadConfig(configFile string) (*internal.Config, error) {
+	var cfg = &internal.Config{}
 
 	file, err := os.Open(configFile)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
 
 	d := yaml.NewDecoder(file)
 	d.SetStrict(true)
@@ -119,7 +122,7 @@ func main() {
 </html>
 `)
 
-	handlerFunc := newHandler(config, logger, newExporterMetrics())
+	handlerFunc := newHandler(config, logger)
 	http.Handle(*metricPath, promhttp.InstrumentMetricHandler(prometheus.DefaultRegisterer, handlerFunc))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if _, err = w.Write(landingPage); err != nil {
