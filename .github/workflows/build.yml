@@ -1,3 +1,4 @@
+---
 name: Build
 
 on:
@@ -7,7 +8,7 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.19
@@ -30,6 +31,6 @@ jobs:
           args: --timeout=3m
 
       - name: Run build
-        run: go build -o webhook
+        run: go build
 
 
