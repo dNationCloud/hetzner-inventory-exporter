@@ -33,4 +33,14 @@ jobs:
       - name: Run build
         run: go build
 
+      - name: Install Helm
+        uses: azure/setup-helm@v3
 
+      - name: Lint chart
+        run: helm lint chart
+
+      - name: Template chart
+        run: helm template chart
+
+      - name: Package chart
+        run: helm package chart
