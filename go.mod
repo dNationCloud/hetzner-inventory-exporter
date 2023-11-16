@@ -3,7 +3,7 @@ module github.com/rkosegi/hetzner-inventory-exporter
 go 1.20
 
 require (
-	github.com/alecthomas/kingpin/v2 v2.3.2
+	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/go-kit/log v0.2.1
 	github.com/hetznercloud/hcloud-go v1.52.0
 	github.com/prometheus/client_golang v1.17.0
