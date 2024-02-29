@@ -35,7 +35,7 @@ jobs:
         run: go build -v ./...
 
       - name: Install Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4
 
       - name: Lint chart
         run: helm lint chart
