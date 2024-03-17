@@ -28,12 +28,12 @@ serviceAccount:
 
 podAnnotations: {} # annotations for all pods
 podSecurityContext: {} # The SecurityContext for pods
-securityContext:
-  capabilities:
-    drop: # Capabilities to drop
-      - ALL
-  readOnlyRootFilesystem: true # Whether root filesystem should be mounted as read only
-  runAsNonRoot: true # Whether run container as non-root user
+securityContext: {}
+#  capabilities:
+#    drop: # Capabilities to drop
+#      - ALL
+#  readOnlyRootFilesystem: true # Whether root filesystem should be mounted as read only
+#  runAsNonRoot: true # Whether run container as non-root user
 
 service:
   type: ClusterIP # Service type

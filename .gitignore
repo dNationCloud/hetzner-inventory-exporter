@@ -2,3 +2,4 @@ hetzner-inventory-exporter
 exporter
 config.yaml
 .idea
+chart/values-local.yaml
