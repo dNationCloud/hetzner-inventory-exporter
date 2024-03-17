@@ -16,8 +16,8 @@ name: hetzner-inventory-exporter
 description: A Hetzner prometheus exporter chart
 sources:
   - https://github.com/dNationCloud/hetzner-inventory-exporter
-version: 1.0.0
-appVersion: v1.0.0
+version: 1.0.1
+appVersion: v1.0.1
 type: application
 maintainers:
   - name: Richard Kosegi
