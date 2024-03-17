@@ -19,12 +19,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type exporterMetrics struct {
-	ScrapesSum   *prometheus.SummaryVec
-	ScrapeErrors *prometheus.CounterVec
-	Error        prometheus.Gauge
-}
-
 type Target struct {
 	ApiKey string `yaml:"apiKey"`
 	Name   string `yaml:"name"`

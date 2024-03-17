@@ -15,21 +15,23 @@ package main
 
 import (
 	"fmt"
+	"github.com/alecthomas/kingpin/v2"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/rkosegi/hetzner-inventory-exporter/internal"
+	"gopkg.in/yaml.v3"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
-	"github.com/alecthomas/kingpin/v2"
-	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
-	"github.com/prometheus/common/version"
+	pv "github.com/prometheus/common/version"
 	webflag "github.com/prometheus/exporter-toolkit/web/kingpinflag"
-	"gopkg.in/yaml.v2"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/prometheus/exporter-toolkit/web"
 )
@@ -39,70 +41,45 @@ const (
 )
 
 var (
-	webConfig = webflag.AddFlags(kingpin.CommandLine, ":9112")
-
-	metricPath = kingpin.Flag(
+	webConfig     = webflag.AddFlags(kingpin.CommandLine, ":9112")
+	telemetryPath = kingpin.Flag(
 		"web.telemetry-path",
 		"Path under which to expose metrics.",
 	).Default("/metrics").String()
-
+	disableDefaultMetrics = kingpin.Flag(
+		"disable-default-metrics",
+		"Exclude default metrics about the exporter itself (promhttp_*, process_*, go_*).",
+	).Bool()
 	configFile = kingpin.Flag(
 		"config.file",
 		"Path to YAML file with configuration",
 	).Default("config.yaml").String()
 )
 
-func init() {
-	prometheus.MustRegister(version.NewCollector(PROG_NAME))
-}
-
-func newHandler(config *internal.Config, logger log.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		registry := prometheus.NewRegistry()
-		registry.MustRegister(internal.New(ctx, config, logger))
-
-		gatherers := prometheus.Gatherers{
-			prometheus.DefaultGatherer,
-			registry,
-		}
-		h := promhttp.HandlerFor(gatherers, promhttp.HandlerOpts{})
-		h.ServeHTTP(w, r)
-	}
-}
-
 func loadConfig(configFile string) (*internal.Config, error) {
-	var cfg = &internal.Config{}
-
-	file, err := os.Open(configFile)
+	var cfg internal.Config
+	data, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, err
 	}
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(file)
-
-	d := yaml.NewDecoder(file)
-	d.SetStrict(true)
-
-	if err := d.Decode(&cfg); err != nil {
+	err = yaml.Unmarshal(data, &cfg)
+	if err != nil {
 		return nil, err
 	}
-
-	return cfg, nil
+	return &cfg, nil
 }
 
 func main() {
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
-	kingpin.Version(version.Print(PROG_NAME))
+	kingpin.Version(pv.Print(PROG_NAME))
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
 	logger := promlog.New(promlogConfig)
-	level.Info(logger).Log("msg", fmt.Sprintf("Starting %s", PROG_NAME), "version", version.Info())
-	level.Info(logger).Log("msg", "Build context", version.BuildContext())
-	level.Info(logger).Log("msg", "Loading configuration", "config", *configFile)
+	level.Info(logger).Log("msg", "Starting "+PROG_NAME, "version", pv.Info())
+	level.Info(logger).Log("msg", "Build context", "build_context", pv.BuildContext())
+	level.Info(logger).Log("msg", "Loading config", "file", configFile)
 
 	config, err := loadConfig(*configFile)
 
@@ -113,32 +90,60 @@ func main() {
 
 	level.Info(logger).Log("msg", fmt.Sprintf("Got %d targets", len(config.Targets)))
 
-	var landingPage = []byte(`<html>
-<head><title>Hetzner inventory exporter</title></head>
-<body>
-<h1>Hetzner inventory exporter</h1>
-<p><a href='` + *metricPath + `'>Metrics</a></p>
-</body>
-</html>
-`)
+	r := prometheus.NewRegistry()
+	r.MustRegister(version.NewCollector(PROG_NAME))
 
-	handlerFunc := newHandler(config, logger)
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		_, err := w.Write([]byte("OK"))
-		if err != nil {
-			panic(err)
-		}
-	})
-	http.Handle(*metricPath, promhttp.InstrumentMetricHandler(prometheus.DefaultRegisterer, handlerFunc))
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if _, err = w.Write(landingPage); err != nil {
-			level.Error(logger).Log("msg", "failed to write landing page", "err", err)
-		}
-	})
+	if err = r.Register(internal.New(config, logger)); err != nil {
+		level.Error(logger).Log("msg", "Couldn't register "+PROG_NAME, "err", err)
+		os.Exit(1)
+	}
+	handler := promhttp.HandlerFor(
+		prometheus.Gatherers{r},
+		promhttp.HandlerOpts{
+			ErrorHandling: promhttp.ContinueOnError,
+		},
+	)
 
-	srv := &http.Server{}
+	if !*disableDefaultMetrics {
+		r.MustRegister(collectors.NewGoCollector())
+		r.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+		handler = promhttp.InstrumentMetricHandler(
+			r, handler,
+		)
+	}
+
+	landingPage, err := web.NewLandingPage(web.LandingConfig{
+		Name:        strings.ReplaceAll(PROG_NAME, "_", " "),
+		Description: "Prometheus Exporter for k8s API resources footprint",
+		Version:     pv.Info(),
+		Links: []web.LandingLinks{
+			{
+				Address: *telemetryPath,
+				Text:    "Metrics",
+			},
+			{
+				Address: "/health",
+				Text:    "Health",
+			},
+		},
+	})
+	if err != nil {
+		level.Error(logger).Log("msg", "Couldn't create landing page", "err", err)
+		os.Exit(1)
+	}
+
+	http.Handle("/", landingPage)
+	http.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	})
+	http.Handle(*telemetryPath, handler)
+
+	srv := &http.Server{
+		ReadHeaderTimeout: 10 * time.Second,
+	}
 	if err := web.ListenAndServe(srv, webConfig, logger); err != nil {
-		level.Error(logger).Log("msg", "Error starting HTTP server", "err", err)
+		level.Error(logger).Log("msg", "Error starting server", "err", err)
 		os.Exit(1)
 	}
 }

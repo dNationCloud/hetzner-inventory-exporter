@@ -12,7 +12,7 @@ The following table lists the configurable parameters of the Hetzner-inventory-e
 | Parameter                | Description             | Default        |
 | ------------------------ | ----------------------- | -------------- |
 | `replicaCount` | Count of replicas | `1` |
-| `image.repository` | Container repository | `"dnationcloud/hetzner-inventory-exporter"` |
+| `image.repository` | Container repository | `"ghcr.io/dnationcloud/hetzner-inventory-exporter"` |
 | `image.pullPolicy` | Container image pull policy | `"IfNotPresent"` |
 | `image.tag` | Overrides the image tag whose default is the chart appVersion. | `""` |
 | `imagePullSecrets` | Image pull secrets | `[]` |

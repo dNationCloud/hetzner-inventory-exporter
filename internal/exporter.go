@@ -29,30 +29,31 @@ const (
 )
 
 type Exporter struct {
-	ctx      context.Context
-	logger   log.Logger
-	config   *Config
-	metrics  exporterMetrics
-	scrapers []scraper
+	logger       log.Logger
+	config       *Config
+	scrapesSum   *prometheus.SummaryVec
+	scrapeErrors *prometheus.CounterVec
+	lastError    prometheus.Gauge
+	scrapers     []scraper
 }
 
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
-	ch <- e.metrics.Error.Desc()
-	e.metrics.ScrapesSum.Describe(ch)
-	e.metrics.ScrapeErrors.Describe(ch)
+	ch <- e.lastError.Desc()
+	e.scrapesSum.Describe(ch)
+	e.scrapeErrors.Describe(ch)
 }
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
-	e.scrape(e.ctx, ch)
-	e.metrics.ScrapesSum.Collect(ch)
-	ch <- e.metrics.Error
-	e.metrics.ScrapeErrors.Collect(ch)
+	e.scrape(context.TODO(), ch)
+	e.scrapesSum.Collect(ch)
+	ch <- e.lastError
+	e.scrapeErrors.Collect(ch)
 }
 
 func (e *Exporter) scrapeTarget(ctx context.Context, ch chan<- prometheus.Metric, target string, c *hcloud.Client) {
-	start := time.Now().UnixMilli()
+	start := time.Now()
 	defer func() {
-		e.metrics.ScrapesSum.WithLabelValues(target).Observe(float64(time.Now().UnixMilli() - start))
+		e.scrapesSum.WithLabelValues(target).Observe(time.Since(start).Seconds())
 	}()
 	var wg sync.WaitGroup
 	defer wg.Wait()
@@ -62,17 +63,17 @@ func (e *Exporter) scrapeTarget(ctx context.Context, ch chan<- prometheus.Metric
 		go func() {
 			defer wg.Done()
 			if err := s.Scrape(ctx, c, target, ch); err != nil {
-				level.Error(e.logger).Log("msg", "Error while scraping target", "target", target,
+				level.Error(e.logger).Log("msg", "lastError while scraping target", "target", target,
 					"scraper", s.Name(), "err", err)
-				e.metrics.ScrapeErrors.WithLabelValues(s.Name()).Inc()
-				e.metrics.Error.Set(1)
+				e.scrapeErrors.WithLabelValues(s.Name()).Inc()
+				e.lastError.Set(1)
 			}
 		}()
 	}
 }
 
 func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
-	e.metrics.Error.Set(0)
+	e.lastError.Set(0)
 
 	var wg sync.WaitGroup
 	defer wg.Wait()
@@ -88,38 +89,34 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 	}
 }
 
-func New(ctx context.Context, config *Config, logger log.Logger) *Exporter {
+func New(config *Config, logger log.Logger) *Exporter {
 	return &Exporter{
-		ctx:     ctx,
-		logger:  logger,
-		config:  config,
-		metrics: newMetrics(),
-		scrapers: []scraper{
-			&imageScraper{}, &serverScraper{}, &volumeScraper{}, &lbScraper{},
-			&netScraper{},
-		},
-	}
-}
-
-func newMetrics() exporterMetrics {
-	return exporterMetrics{
-		ScrapesSum: prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		logger: logger,
+		config: config,
+		scrapesSum: prometheus.NewSummaryVec(prometheus.SummaryOpts{
 			Namespace: namespace,
 			Subsystem: "exporter",
 			Name:      "scrapes",
 			Help:      "Scrapes summary on per-project basis.",
 		}, []string{"project"}),
-		ScrapeErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+		scrapeErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
 			Subsystem: "exporter",
 			Name:      "scrape_errors_total",
 			Help:      "Total number of times an error occurred scraping an inventory.",
 		}, []string{"collector"}),
-		Error: prometheus.NewGauge(prometheus.GaugeOpts{
+		lastError: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: "exporter",
 			Name:      "last_scrape_error",
 			Help:      "Whether the last scrape of metrics from inventory resulted in an error (1 for error, 0 for success).",
 		}),
+		scrapers: []scraper{
+			&imageScraper{},
+			&serverScraper{},
+			&volumeScraper{},
+			&lbScraper{},
+			&netScraper{},
+		},
 	}
 }
