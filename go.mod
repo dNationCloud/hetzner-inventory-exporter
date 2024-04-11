@@ -20,7 +20,7 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/hetznercloud/hcloud-go v1.53.0
 	github.com/prometheus/client_golang v1.19.0
-	github.com/prometheus/common v0.52.2
+	github.com/prometheus/common v0.52.3
 	github.com/prometheus/exporter-toolkit v0.11.0
 	gopkg.in/yaml.v3 v3.0.1
 )
