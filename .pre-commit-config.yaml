@@ -18,7 +18,7 @@ repos:
       - id: trailing-whitespace
       - id: check-merge-conflict
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.57.2
+    rev: v1.58.1
     hooks:
       - id: golangci-lint
   - repo: https://github.com/dnephin/pre-commit-golang
