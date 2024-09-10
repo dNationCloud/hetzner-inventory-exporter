@@ -15,11 +15,10 @@ package internal
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/hetznercloud/hcloud-go/hcloud"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -29,7 +28,7 @@ const (
 )
 
 type Exporter struct {
-	logger       log.Logger
+	logger       *slog.Logger
 	config       *Config
 	scrapesSum   *prometheus.SummaryVec
 	scrapeErrors *prometheus.CounterVec
@@ -63,7 +62,7 @@ func (e *Exporter) scrapeTarget(ctx context.Context, ch chan<- prometheus.Metric
 		go func() {
 			defer wg.Done()
 			if err := s.Scrape(ctx, c, target, ch); err != nil {
-				level.Error(e.logger).Log("msg", "Error while scraping target", "target", target,
+				e.logger.Error("msg", "Error while scraping target", "target", target,
 					"scraper", s.Name(), "err", err)
 				e.scrapeErrors.WithLabelValues(s.Name()).Inc()
 				e.lastError.Set(1)
@@ -79,7 +78,7 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 	defer wg.Wait()
 	for _, target := range e.config.Targets {
 		name := target.Name
-		level.Debug(e.logger).Log("msg", "Scraping target", "target", name)
+		e.logger.Debug("Scraping target", "target", name)
 		client := hcloud.NewClient(hcloud.WithToken(target.ApiKey))
 		wg.Add(1)
 		go func() {
@@ -89,7 +88,7 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 	}
 }
 
-func New(config *Config, logger log.Logger) *Exporter {
+func New(config *Config, logger *slog.Logger) *Exporter {
 	return &Exporter{
 		logger: logger,
 		config: config,
