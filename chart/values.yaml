@@ -59,5 +59,3 @@ serviceMonitor:
   scrape_config: |
     - port: metrics
       interval: 5m
-
-

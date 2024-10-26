@@ -15,15 +15,16 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/rkosegi/hetzner-inventory-exporter/internal"
 	"gopkg.in/yaml.v3"
-	"net/http"
-	"os"
-	"strings"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

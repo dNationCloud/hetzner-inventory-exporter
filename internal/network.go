@@ -15,6 +15,7 @@ package internal
 
 import (
 	"context"
+
 	"github.com/hetznercloud/hcloud-go/hcloud"
 	"github.com/prometheus/client_golang/prometheus"
 )
