@@ -62,7 +62,7 @@ func (e *Exporter) scrapeTarget(ctx context.Context, ch chan<- prometheus.Metric
 		go func() {
 			defer wg.Done()
 			if err := s.Scrape(ctx, c, target, ch); err != nil {
-				e.logger.Error("msg", "Error while scraping target", "target", target,
+				e.logger.Error("Error while scraping target", "target", target,
 					"scraper", s.Name(), "err", err)
 				e.scrapeErrors.WithLabelValues(s.Name()).Inc()
 				e.lastError.Set(1)
