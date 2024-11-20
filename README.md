@@ -104,7 +104,7 @@ targets:
 ```
 
 ```shell
-helm upgrade --install my-release ./chart --values conig.yaml
+helm upgrade --install my-release ./chart --values config.yaml
 ```
 
 For detailed list of all supported chart values, check [generated documentation](chart)
