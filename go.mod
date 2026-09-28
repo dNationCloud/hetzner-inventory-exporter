@@ -13,7 +13,7 @@
 
 module github.com/rkosegi/hetzner-inventory-exporter
 
-go 1.25.0
+go 1.27
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
