@@ -3,6 +3,13 @@
 Prometheus exporter of Hetzner Cloud inventory
 
 
+## ⚠️ ⚠️  Deprecation notice
+
+This project is now deprecated.
+OTEL collector provides same functionality (and probably more).
+
+
+
 ## Build
 
 - Using docker
